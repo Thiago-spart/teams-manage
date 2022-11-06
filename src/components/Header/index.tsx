@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ showBackButton = false }) => {
 		<S.Container
 			entering={FadeIn}
 			exiting={FadeOut}
-			layout={Layout.easing()}
+			layout={Layout.springify()}
 		>
 			{showBackButton && (
 				<S.BackButton onPress={handleGoBack}>
