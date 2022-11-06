@@ -1,7 +1,8 @@
 import styled, { css } from "styled-components/native";
 import { MaterialIcons } from "@expo/vector-icons"
+import Animated from "react-native-reanimated";
 
-export const Container = styled.View`
+export const Container = styled(Animated.View)`
 	width: 100%;
 	height: 56px;
 
