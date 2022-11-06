@@ -1,7 +1,7 @@
-import { TouchableOpacity } from "react-native";
-import styled from "styled-components/native";
+import styled from 'styled-components/native'
+import { TouchableOpacity } from 'react-native'
+import { MaterialIcons } from '@expo/vector-icons'
 
-import { MaterialIcons } from "@expo/vector-icons"
 import { StyleButtonProps } from "./types";
 
 export const Container = styled(TouchableOpacity)`
