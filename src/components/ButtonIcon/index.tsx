@@ -6,7 +6,7 @@ export const ButtonIcon: React.FC<ButtonProps> = ({ type = "PRIMARY", icon, ...r
 		<S.Container
 			{...rest}
 		>
-			<S.Icon type={type} icon={icon} />
+			<S.Icon type={type} name={icon} />
 		</S.Container>
 	)
 }
