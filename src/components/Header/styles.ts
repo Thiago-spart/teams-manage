@@ -1,7 +1,8 @@
 import styled from "styled-components/native";
 import { CaretLeft } from "phosphor-react-native"
+import Animated from "react-native-reanimated";
 
-export const Container = styled.View`
+export const Container = styled(Animated.View)`
 	width: 100%;
 	flex-direction: row;
 	align-items: center;
@@ -11,7 +12,6 @@ export const Container = styled.View`
 export const Logo = styled.Image`
 	width: 46px;
 	height: 55px;
-	/* background: red; */
 `;
 
 export const BackButton = styled.TouchableOpacity`
