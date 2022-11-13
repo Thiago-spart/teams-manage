@@ -1,97 +1,96 @@
-import { Button } from "@components/Button"
-import { ButtonIcon } from "@components/ButtonIcon"
-import { Filter } from "@components/Filter"
-import { Header } from "@components/Header"
-import { Highlight } from "@components/Highlight"
-import { Input } from "@components/Input"
-import { ListEmpty } from "@components/ListEmpty"
-import { Loading } from "@components/Loading"
-import { PlayerCard } from "@components/PlayerCard"
+import { ButtonIcon, Button, Filter, Header, Highlight, Input, ListEmpty, Loading, PlayerCard } from "@components/index"
+
+import { DeletePlayerParamsProps, NewPlayerParamsProps, RoutesProps } from "./types"
+
 import { useRoute, useNavigation } from "@react-navigation/native"
+import React from "react"
+import { Alert, FlatList, TextInput } from "react-native"
+import { useMutation, useQuery } from "@tanstack/react-query"
+
 import { groupRemoveByName } from "@storage/group/groupRemoveByName"
 import { playerAddByGroup } from "@storage/player/playerAddByGroup"
 import { playerRemoveByGroup } from "@storage/player/playerRemoveByGroup"
 import { playersGetByGroupAndTeam } from "@storage/player/playersGetByGroupAndTeam"
-import { PlayerStorageDTO } from "@storage/player/playerStorageDTS"
 import { AppError } from "@utils/AppError"
-import React from "react"
-import { Alert, FlatList, TextInput } from "react-native"
+
 import * as S from "./styles"
-import { RoutesProps } from "./types"
+import { queryClient } from "@services/queryClient"
 
 export const Players: React.FC = () => {
-	const [isLoading, setIsLoading] = React.useState(true);
 	const [newPlayerName, setNewPlayerName] = React.useState("")
 	const [team, setTeam] = React.useState<string>("Time A")
-	const [players, setPlayers] = React.useState<Array<PlayerStorageDTO>>([])
 	const navigation = useNavigation()
 
 	const newPlayerNameInputRef = React.useRef<TextInput>(null)
+	
+	const { data, isLoading, refetch } = useQuery(["players"], () => playersGetByGroupAndTeam(group, team))
 	
 	const route = useRoute()
 	
 	const { group } = route.params as RoutesProps
 
+	const addPlayerMutation = useMutation((newPlayerData: NewPlayerParamsProps) => {
+		return playerAddByGroup(newPlayerData.newPlayer, newPlayerData.group);
+	}, { onError(error) {
+		if(error instanceof AppError) {
+			Alert.alert("Nova pessoa", error.message);
+		} else {
+			Alert.alert("Nova pessoa", "Não foi possível adicionar.")
+		}
+	}, onSuccess() {
+			newPlayerNameInputRef.current?.blur();
+			
+			setNewPlayerName("")
+			refetch()
+	},})
+
+	const removePlayerMutation = useMutation((newPlayerData: DeletePlayerParamsProps) => {
+		return playerRemoveByGroup(newPlayerData.playerName, newPlayerData.group)
+	}, { onError: () => {
+		Alert.alert("Remover pessoa", "Não foi possível remover pessoa.")
+	}, onSuccess: () => {
+		refetch()
+	},})
+
+	const removeGroupMutation = useMutation((group: string) => {
+		return groupRemoveByName(group)
+	}, { onError: () => {
+		Alert.alert("Remover grupo", "Não foi possível remover o grupo.")
+	}, onSuccess: () => {
+		navigation.navigate("groups")
+	}})
+	
 	const handleAddPlayer = async () => {
 		if(newPlayerName.trim() === "") {
 			return Alert.alert("Nova pessoa", "informe o nome da pessoa para adicionar")
 		}
 
-		const newPlayer = {
-			name: newPlayerName,
-			team,
+		const newPlayerData = {
+			newPlayer: {
+				name: newPlayerName,
+				team,
+			},
+			group
 		}
 
-		try {
-			await playerAddByGroup(newPlayer, group);
-
-			newPlayerNameInputRef.current?.blur();
-			
-			setNewPlayerName("")
-			fetchPlayersByTeam()
-		} catch (error) {
-			if(error instanceof AppError) {
-				Alert.alert("Nova pessoa", error.message);
-			} else {
-				console.log(error);
-				Alert.alert("Nova pessoa", "Não foi possível adicionar.")
-			}
-		}
-	}
-
-	const fetchPlayersByTeam = async () => {
-		try {
-			setIsLoading(true)
-			const playersByTeam = await playersGetByGroupAndTeam(group, team);
-			setPlayers(playersByTeam)
-		} catch(error) {
-			console.log(error)
-			Alert.alert("Pessoas", "Não foi possível carregar as pessoas do time selecionado.");
-		} finally {
-			setIsLoading(false)
-		}
+		addPlayerMutation.mutate(newPlayerData)
 	}
 
 	const handleRemovePlayer = async (playerName: string) => {
-		try {
-			await playerRemoveByGroup(playerName, group);
-			fetchPlayersByTeam()
-		} catch (error) {
-			console.log(error)
-			Alert.alert("Remover pessoa", "Não foi possível remover pessoa.")
-		}
+		removePlayerMutation.mutate({
+			playerName,
+			group
+		})
+	}
+
+	const handleSwitchTeam = (currentTime: string) => {
+		setTeam(currentTime)
+
+		refetch()
 	}
 
 	const groupRemove = async () => {
-		try {
-			await groupRemoveByName(group)
-
-			navigation.navigate("groups")
-		} catch (error) {
-			console.log(error)
-
-			Alert.alert("Remover grupo", "Não foi possível remover o grupo.")
-		}
+		removeGroupMutation.mutate(group)
 	}
 
 	const handleRemoveGroup = () => {
@@ -104,10 +103,6 @@ export const Players: React.FC = () => {
 			]
 		)
 	}
-
-	React.useEffect(() => {
-		fetchPlayersByTeam()
-	}, [team])
 
 	return (
 		<S.Container>
@@ -140,20 +135,20 @@ export const Players: React.FC = () => {
 						<Filter
 							title={item}
 							isActive={item === team}
-							onPress={() => setTeam(item)}
+							onPress={() => handleSwitchTeam(item)}
 						/>
 					)}
 					horizontal
 				/>
 				
 				<S.NumberOfPlayers>
-					{players.length}
+					{data?.length}
 				</S.NumberOfPlayers>
 			</S.HeaderList>
 
 			{isLoading ? <Loading /> : (
 				<FlatList
-					data={players}
+					data={data}
 					keyExtractor={item => item.name}
 					renderItem={({ item }) => (
 						<PlayerCard
@@ -169,7 +164,7 @@ export const Players: React.FC = () => {
 					showsVerticalScrollIndicator={false}
 					contentContainerStyle={[
 						{ paddingBottom: 100 },
-						players.length === 0 && { flex: 1 },
+						data?.length === 0 && { flex: 1 },
 					]}
 				/>
 			)}
