@@ -14,7 +14,6 @@ import { playersGetByGroupAndTeam } from "@storage/player/playersGetByGroupAndTe
 import { AppError } from "@utils/AppError"
 
 import * as S from "./styles"
-import { queryClient } from "@services/queryClient"
 
 export const Players: React.FC = () => {
 	const [newPlayerName, setNewPlayerName] = React.useState("")
@@ -23,7 +22,7 @@ export const Players: React.FC = () => {
 
 	const newPlayerNameInputRef = React.useRef<TextInput>(null)
 	
-	const { data, isLoading, refetch } = useQuery(["players"], () => playersGetByGroupAndTeam(group, team))
+	const { data, isLoading, refetch } = useQuery({ queryKey: ["players"], queryFn: () => playersGetByGroupAndTeam(group, team)})
 	
 	const route = useRoute()
 	
