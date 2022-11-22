@@ -11,12 +11,11 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { groupsGetAll } from "@storage/group/groupsGetAll";
 import { Loading } from "@components/Loading";
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@services/queryClient";
 
 export const Groups: React.FC = () => {
   const navigation = useNavigation()
 
-	const { data, isLoading } = useQuery(["groups"], () => groupsGetAll(), { staleTime: 300 })
+	const { data, isLoading, refetch } = useQuery({ queryKey: ["groups"], queryFn: () => groupsGetAll(), staleTime: 300 })
 
   const handleNewGroup = () => {    
     navigation.navigate("new")
@@ -27,7 +26,7 @@ export const Groups: React.FC = () => {
   }
 
 	useFocusEffect(React.useCallback(()=> {
-    queryClient.invalidateQueries(['groups'])
+    refetch()
   }, []))
   
   return (

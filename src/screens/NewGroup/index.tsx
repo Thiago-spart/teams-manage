@@ -4,7 +4,7 @@ import { Highlight } from "@components/Highlight"
 import { Input } from "@components/Input"
 import { useNavigation } from "@react-navigation/native"
 import { groupCreate } from "@storage/group/groupCreate"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import { AppError } from "@utils/AppError"
 import React from "react"
 import { Alert } from "react-native"
@@ -13,7 +13,6 @@ import * as S from "./styles"
 export const NewGroup: React.FC = () => {
 	const [group, setGroup] = React.useState("")
 	const navigation = useNavigation() 
-	const queryClient = useQueryClient()
 
 	const groupMutation = useMutation((newGroup: string) => {
 		return groupCreate(newGroup)		
@@ -25,7 +24,6 @@ export const NewGroup: React.FC = () => {
 			console.log(error)
 		}
 	}, onSuccess() {
-		queryClient.invalidateQueries(['groups'])
 		navigation.navigate("players", { group })
 	},})
 	
